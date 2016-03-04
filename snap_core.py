@@ -44,8 +44,16 @@ def __node_process(feat):
 
 
 def load_data_set(filename=DATA_SET_NAME):
-    with open(os.path.join(OUT_DATA_DIR, filename + '.node')) as fp:
-
+    with open(os.path.join(OUT_DATA_DIR, filename + '.node'), 'rb') as fp:
+        lines = [line.strip('\r\n').split(' ') for line in fp.readlines()]
+        nodes = {item[0]:(item[1].split(','), item[2].split(','))
+                 for item in lines}
+    with open(os.path.join(OUT_DATA_DIR, filename + '.edge'), 'rb') as fp:
+        edges = [line.strip('\r\n').split(' ') for line in fp.readlines()]
+    with open(os.path.join(OUT_DATA_DIR, filename + '.feat'), 'rb') as fp:
+        lines = [line.strip('\r\n').split(' ') for line in fp.readlines()]
+        feats = {item[1]:item[2] for item in lines}
+    return nodes, edges, feats
 
 
 def load_egos(filename=EGO_FILE):

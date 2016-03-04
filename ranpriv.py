@@ -28,11 +28,12 @@ def main():
     """
     :rtype: int
     """
-    egos = sc.load_egos()
-    print len(egos)
-    ignores = sg.load_ignore_feat()
-    sg.data_generator(egos, 'job_title', ignores, 'institution', IT_COMPANY)
-
+    # egos = sc.load_egos()
+    # print len(egos)
+    # ignores = sg.load_ignore_feat()
+    # sg.data_generator(egos, 'job_title', ignores, 'institution', IT_COMPANY)
+    nodes, edges, feats = sc.load_data_set()
+    print len(nodes), len(edges), len(feats)
 
 if __name__ == '__main__':
     main()

@@ -16,10 +16,13 @@
 import os
 
 
+DATA_SET_NAME = 'RanPriv'
 SNAP_DIR = 'E:\\RanPriv\\gplus\\gplus'
 RAW_DATA_DIR = 'data'
 OUT_DATA_DIR = 'out'
 EGO_FILE = 'ego.nodes'
+EGO_EDGE = 'gplus_combined.txt'
+SYMBOLS = ',.?;:[]\!@#$%^&*()-'
 
 
 def __feat_process(feat):
@@ -38,6 +41,11 @@ def __node_process(feat):
     fea = li[1:]
     index = [num for num, value in enumerate(fea) if value == '1']
     return uid, index
+
+
+def load_data_set(filename=DATA_SET_NAME):
+    with open(os.path.join(OUT_DATA_DIR, filename + '.node')) as fp:
+
 
 
 def load_egos(filename=EGO_FILE):

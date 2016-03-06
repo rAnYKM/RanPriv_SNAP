@@ -119,7 +119,11 @@ def load_sample_data_set(filename=SAMPLE_DATA_SET):
         lines = [line.strip('\r\n').split(',') for line in fp.readlines()]
         nodes = {item[0]: item[1].lower() for item in lines}
     with open(os.path.join(RAW_DATA_DIR, filename + '.edges'), 'rb') as fp:
-        edges = [line.strip('\r\n').split(',') for line in fp.readlines()]
+        edges = []
+        line = fp.readline()
+        while line:
+            edges.append(line.strip('\r\n').split(','))
+            line = fp.readline()
     return nodes, edges
 
 

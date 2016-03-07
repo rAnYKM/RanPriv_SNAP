@@ -1,7 +1,10 @@
-#big datasets
-./data/big_data.edges
-./data/big_data.nodes
-./data/big_data_un.edges
-./data/big_data_un.nodes
-./out/big_data.tri
-./out/large_RanPriv.edge
+# big datasets
+data/big_data.edges
+data/big_data.nodes
+data/big_data_un.edges
+data/big_data_un.nodes
+data/h_big_data.edges
+data/h_big_data.nodes
+out/big_data.tri
+out/large_RanPriv.edge
+margatroid.py

@@ -38,7 +38,10 @@ def big_data_set(threshold=5):
     print ctr['rnd'], ctr['mns'], ctr['exe']
     print ("Important nodes number: %d" % len(sel_nodes))
     sa.fetch_homophily(graph, nodes, sel_nodes, ['unl'])
-    sa.fetch_label_homophily(graph, nodes, 'rnd', [])
+    sa.fetch_AND(graph, nodes, sel_nodes, ['unl'])
+    print sa.fetch_label_homophily(graph, nodes, 'rnd', [])
+    print sa.fetch_label_homophily(graph, nodes, 'mns', [])
+    print sa.fetch_label_homophily(graph, nodes, 'exe', [])
     # node_tri = sa.fetch_triangles(graph, nodes, sel_nodes)
     # sa.save_triangles('big_data.tri', node_tri)
     node_tri = sa.load_triangles('big_data.tri')

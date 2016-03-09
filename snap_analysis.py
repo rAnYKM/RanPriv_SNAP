@@ -20,7 +20,7 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from snap_core import *
-
+from ran_priv_core import *
 
 def analyze_triangle(node_tri, labeled_nodes, weight):
     top_dict = {}
@@ -95,6 +95,34 @@ def fetch_label_homophily(graph, labeled_nodes, label, not_included):
     return n / m
 
 
+def fetch_degree_closeness(graph, nodes, sel_nodes, not_included):
+    labels = {'rnd': [], 'mns': [], 'exe': []}
+    node_dc = nx.degree_centrality(graph)
+    for node in sel_nodes:
+        label = nodes[node]
+        if label in not_included:
+            continue
+        li = labels[label]
+        li.append(node_dc[node])
+        labels[label] = li
+    # print labels
+    show_distribution(labels, 0, 0.01, 0.0002)
+
+
+def fetch_AND(graph, nodes, sel_nodes, not_included):
+    labels = {'rnd': [], 'mns': [], 'exe': []}
+    node_dc = nx.average_neighbor_degree(graph)
+    for node in sel_nodes:
+        label = nodes[node]
+        if label in not_included:
+            continue
+        li = labels[label]
+        li.append(node_dc[node])
+        labels[label] = li
+    print labels
+    show_distribution(labels, 0, 300, 10)
+
+
 def fetch_triangles(graph, labeled_nodes, sel_nodes):
     nodes_tri = {}
     crt = 0
@@ -159,6 +187,7 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
     labels = [num_label[nodes[node]] for node in sel_nodes]
     label_y = np.array(labels)
     sss = StratifiedShuffleSplit(label_y, 10, test_size=0.1, random_state=0)
+    '''
     tre = DecisionTreeClassifier(random_state=0)
     clf = SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
               decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
@@ -172,7 +201,7 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
     for node in sel_nodes:
         small_ctr += 1
         if small_ctr % 100 == 0:
-            print small_ctr, feature
+            print small_ctr # , feature
         neighbors = graph.neighbors(node)
         nei_feature = [nodes[nd] for nd in neighbors]
         ctr = Counter(nei_feature)
@@ -200,21 +229,21 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
                 p_ctr = Counter(pat)
                 feature += [p_ctr['rnd,rnd'] / f_num, p_ctr['exe,rnd'] / f_num, p_ctr['mns,rnd'] / f_num,
                             p_ctr['exe,exe'] / f_num, p_ctr['exe,mns'] / f_num, p_ctr['mns,mns'] / f_num]
-
         feature += [node_dc[node], node_and[node]]
         features.append(feature)
-
-
-
     feature_x = np.array(features)
+    '''
     print ('start to learn features')
     for train_index, test_index in sss:
-
-        X_train = feature_x[train_index]
+        # X_train = feature_x[train_index]
         Y_train = label_y[train_index]
-        X_test = feature_x[test_index]
+        # X_test = feature_x[test_index]
         Y_test = label_y[test_index]
-        y_pred = gnb.fit(X_train, Y_train).predict(X_test)
+        # y_pred = gnb.fit(X_train, Y_train).predict(X_test)
+        #y_pred = ran_prob_model(\
+        #    graph, nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
+        y_pred = ran_tri_prob_model(\
+            graph, nodes, tri_nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
         ta = 0.0 # true
         ga = 0.0 # guess true but wrong
         za = 0.0 # how many a ta/za = recall ta/(ta+ga) = precision

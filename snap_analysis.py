@@ -19,6 +19,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import MultinomialNB
 from snap_core import *
 from ran_priv_core import *
 
@@ -187,12 +188,13 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
     labels = [num_label[nodes[node]] for node in sel_nodes]
     label_y = np.array(labels)
     sss = StratifiedShuffleSplit(label_y, 10, test_size=0.1, random_state=0)
-    '''
+
     tre = DecisionTreeClassifier(random_state=0)
     clf = SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
               decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
               max_iter=-1, probability=False, random_state=None, shrinking=True,
               tol=0.001, verbose=False)
+    mnb = MultinomialNB()
     gnb = GaussianNB()
     features = []
     small_ctr = 0
@@ -206,10 +208,11 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
         nei_feature = [nodes[nd] for nd in neighbors]
         ctr = Counter(nei_feature)
         tot = float(len(neighbors))
-        feature = [ctr['rnd'] / tot, ctr['mns'] / tot, ctr['exe'] / tot]
+        # feature = [ctr['rnd'], ctr['mns'], ctr['exe']]
+
         tri = tri_nodes[node]
         num_tri = len(tri)
-        # feature = []
+        feature = []
         if num_tri == 0:
             feature += [0, 0, 0, 0, 0, 0]
         else:
@@ -227,23 +230,26 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
                         pattern = lab1 + ',' + lab2
                     pat.append(pattern)
                 p_ctr = Counter(pat)
-                feature += [p_ctr['rnd,rnd'] / f_num, p_ctr['exe,rnd'] / f_num, p_ctr['mns,rnd'] / f_num,
-                            p_ctr['exe,exe'] / f_num, p_ctr['exe,mns'] / f_num, p_ctr['mns,mns'] / f_num]
-        feature += [node_dc[node], node_and[node]]
+                feature += [p_ctr['rnd,rnd'], p_ctr['exe,rnd'], p_ctr['mns,rnd'],
+                            p_ctr['exe,exe'], p_ctr['exe,mns'], p_ctr['mns,mns']]
+        # feature += [node_dc[node], node_and[node]]
+
         features.append(feature)
     feature_x = np.array(features)
-    '''
+
     print ('start to learn features')
     for train_index, test_index in sss:
-        # X_train = feature_x[train_index]
+        X_train = feature_x[train_index]
         Y_train = label_y[train_index]
-        # X_test = feature_x[test_index]
+        X_test = feature_x[test_index]
         Y_test = label_y[test_index]
-        # y_pred = gnb.fit(X_train, Y_train).predict(X_test)
-        #y_pred = ran_prob_model(\
+        y_pred = mnb.fit(X_train, Y_train).predict(X_test)
+        #y_pred = ran_log_model(\
         #    graph, nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
-        y_pred = ran_tri_prob_model(\
-            graph, nodes, tri_nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
+        #y_pred = ran_tri_prob_model(\
+        #    graph, nodes, tri_nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
+        #y_pred = ran_mixture_model(\
+        #    graph, nodes, tri_nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
         ta = 0.0 # true
         ga = 0.0 # guess true but wrong
         za = 0.0 # how many a ta/za = recall ta/(ta+ga) = precision
@@ -281,14 +287,15 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
                 else:
                     tc += 1
         if int(ga) != 0:
-            print 'RND: ', ta, ga, za, ta / (ga + ta), ta / za
+            print 'RND: ', ta, ga, za, ta / (ga + ta), ta / za,
         else:
-            print 'RND: ', 0, ta / za
+            print 'RND: ', 0, ta / za,
         if int(gb) != 0:
-            print 'MNS: ', tb, gb, zb, tb / (gb + tb), tb / zb
+            print 'MNS: ', tb, gb, zb, tb / (gb + tb), tb / zb,
         else:
-            print 'MNS: ', 0, tb / zb
+            print 'MNS: ', 0, tb / zb,
         if int(gc) != 0:
-            print 'EXE: ', tc, gc, zc, tc / (gc + tc), tc / zc
+            print 'EXE: ', tc, gc, zc, tc / (gc + tc), tc / zc,
         else:
-            print 'EXE: ', 0, tc / zc
+            print 'EXE: ', 0, tc / zc,
+        print '\n'

@@ -28,7 +28,7 @@ IT_COMPANY = [
 
 
 def big_data_set(threshold=5):
-    nodes, edges = sc.load_sample_data_set('h_big_data')
+    nodes, edges = sc.load_sample_data_set('big_data')
     graph = nx.Graph()
     graph.add_edges_from(edges)
     print ("network information %d nodes %d edges" % (graph.number_of_nodes(), graph.number_of_edges()))
@@ -37,14 +37,17 @@ def big_data_set(threshold=5):
     ctr = Counter(tag)
     print ctr['rnd'], ctr['mns'], ctr['exe']
     print ("Important nodes number: %d" % len(sel_nodes))
-    sa.fetch_homophily(graph, nodes, sel_nodes, ['unl'])
-    sa.fetch_AND(graph, nodes, sel_nodes, ['unl'])
-    print sa.fetch_label_homophily(graph, nodes, 'rnd', [])
-    print sa.fetch_label_homophily(graph, nodes, 'mns', [])
-    print sa.fetch_label_homophily(graph, nodes, 'exe', [])
     # node_tri = sa.fetch_triangles(graph, nodes, sel_nodes)
     # sa.save_triangles('big_data.tri', node_tri)
     node_tri = sa.load_triangles('big_data.tri')
+    # sc.capture_ego(graph, nodes, '113006028898915385825', node_tri, 'sample.ego')
+
+    # sa.fetch_homophily(graph, nodes, sel_nodes, ['unl'])
+    # sa.fetch_AND(graph, nodes, sel_nodes, ['unl'])
+    # print sa.fetch_label_homophily(graph, nodes, 'rnd', [])
+    # print sa.fetch_label_homophily(graph, nodes, 'mns', [])
+    # print sa.fetch_label_homophily(graph, nodes, 'exe', [])
+
     weight = {'rnd':0.5, 'mns':2.5, 'exe':1, 'unl':0.1}
     #sa.analyze_triangle(node_tri, nodes, weight)
     sa.machine_learning(graph, nodes, sel_nodes, node_tri)
@@ -91,6 +94,7 @@ def main():
     # print sa.fetch_label_homophily(un_net, labeled_nodes, 'rnd', [])
     # nodes, edges = sc.load_sample_data_set()
     big_data_set()
+
 
 
 if __name__ == '__main__':

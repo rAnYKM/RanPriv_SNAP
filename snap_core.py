@@ -24,7 +24,7 @@ RAW_DATA_DIR = 'data'
 OUT_DATA_DIR = 'out'
 EGO_FILE = 'ego.nodes'
 EGO_EDGE = 'gplus_combined.txt'
-SYMBOLS = ',.?;:[]\!@#$%^&*()-'
+SYMBOLS = ',.?;:[]\!@#$%^&*()-/'
 
 
 def __edge_format(edge):
@@ -68,6 +68,17 @@ def build_undirected_graph(nodes, edges):
     network.add_nodes_from(nodes)
     network.add_edges_from(edges)
     return network
+
+
+def capture_ego(graph, nodes, ego, triples, filename):
+    ego_net = nx.Graph()
+    neighbors = graph.neighbors(ego)
+    ego_net.add_nodes_from([(n, {'label':nodes[n]}) for n in neighbors + [ego]])
+    ego_net.add_edges_from([[ego, v] for v in neighbors])
+    tri = triples[ego]
+    if [''] not in tri:
+        ego_net.add_edges_from(tri)
+    nx.write_gexf(ego_net, os.path.join(OUT_DATA_DIR, filename + '.gexf'))
 
 
 def fetch_node_label(nodes, feats, sel_nodes):

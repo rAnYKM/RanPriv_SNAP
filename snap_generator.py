@@ -14,6 +14,8 @@
 
 
 from snap_core import *
+from snap_raw import *
+
 
 IGNORE_FILE = 'ignore.keyword'
 FEAT_FILE = 'RanPriv.feat'
@@ -129,6 +131,26 @@ def edge_generator(nodes, filename=EGO_EDGE, out_filename=EDGE_FILE):
         for elem in large_network:
             fp.write(elem + '\r\n')
     print ('large network written')
+
+
+def small_edge_generator(nodes, filename=EGO_EDGE, out_filename=EDGE_FILE):
+    small_network = set()
+    with open(os.path.join(SNAP_DIR, filename), 'rb') as fp:
+        line = fp.readline().strip('\r\n')
+        ctr = 0
+        while line:
+            pairs = line.split(' ')
+            if pairs[0] in nodes and pairs[1] in nodes:
+                small_network.add(line)
+            line = fp.readline().strip('\r\n')
+            ctr += 1
+            if ctr % 50000 == 0:
+                print ctr
+        print ctr
+    with open(os.path.join(OUT_DATA_DIR, out_filename), 'wb') as fp:
+        for elem in small_network:
+            fp.write(elem + '\r\n')
+    print ('small network written')
 
 
 def load_ignore_feat(filename=IGNORE_FILE):

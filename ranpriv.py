@@ -16,6 +16,7 @@ import snap_core as sc
 import snap_generator as sg
 import snap_analysis as sa
 import networkx as nx
+import os
 from collections import Counter
 
 IT_COMPANY = [
@@ -27,8 +28,21 @@ IT_COMPANY = [
     ]
 
 
+def new_data_set():
+    nodes, edges = sc.load_sample_data_set('ranykm')
+    graph = nx.DiGraph()
+    graph.add_edges_from(edges)
+    un_graph = sc.fetch_undirected_graph(graph)
+    with open(os.path.join(sc.RAW_DATA_DIR, 'ranykm.compress.edges'), 'w') as fp:
+        for edge in un_graph.edges():
+            fp.write(edge[0] +',' + edge[1] + '\n')
+    with open(os.path.join(sc.RAW_DATA_DIR, 'ranykm.compress.nodes'), 'w') as fp:
+        for node in un_graph.nodes():
+            fp.write(node + ',' + nodes[node] + '\n')
+
+
 def big_data_set(threshold=5):
-    nodes, edges = sc.load_sample_data_set('big_data')
+    nodes, edges = sc.load_sample_data_set('ranykm.compress')
     graph = nx.Graph()
     graph.add_edges_from(edges)
     print ("network information %d nodes %d edges" % (graph.number_of_nodes(), graph.number_of_edges()))
@@ -38,8 +52,8 @@ def big_data_set(threshold=5):
     print ctr['rnd'], ctr['mns'], ctr['exe']
     print ("Important nodes number: %d" % len(sel_nodes))
     # node_tri = sa.fetch_triangles(graph, nodes, sel_nodes)
-    # sa.save_triangles('big_data.tri', node_tri)
-    node_tri = sa.load_triangles('big_data.tri')
+    # sa.save_triangles('ranykm_big_data.tri', node_tri)
+    node_tri = sa.load_triangles('ranykm_big_data.tri')
     # sc.capture_ego(graph, nodes, '113006028898915385825', node_tri, 'sample.ego')
 
     # sa.fetch_homophily(graph, nodes, sel_nodes, ['unl'])
@@ -48,9 +62,12 @@ def big_data_set(threshold=5):
     # print sa.fetch_label_homophily(graph, nodes, 'mns', [])
     # print sa.fetch_label_homophily(graph, nodes, 'exe', [])
 
-    weight = {'rnd':0.5, 'mns':2.5, 'exe':1, 'unl':0.1}
-    #sa.analyze_triangle(node_tri, nodes, weight)
+    # weight = {'rnd':0.5, 'mns':2.5, 'exe':1, 'unl':0.1}
+    # sa.analyze_triangle(node_tri, nodes, weight)
+    # sa.analyze_nodes(graph, nodes, node_tri, sel_nodes)
     sa.machine_learning(graph, nodes, sel_nodes, node_tri)
+    # node_analysis, node_label = sa.load_analysis('stat.csv')
+    # sa.analysis_learning(graph, nodes, node_analysis, node_label)
 
 
 def small_data_set(threshold=5):
@@ -65,6 +82,7 @@ def small_data_set(threshold=5):
     print ctr['rnd'], ctr['mns'], ctr['exe']
     print ("Important nodes number: %d" % len(sel_nodes))
     # sa.fetch_homophily(graph, labeled_nodes, sel_nodes, ['unl'])
+
 
 def main():
     """

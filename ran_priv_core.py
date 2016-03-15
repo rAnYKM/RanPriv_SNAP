@@ -46,6 +46,32 @@ def __label_triple(label1, label2, label3, div):
     return div.join(li)
 
 
+def pair_distribution(graph, nodes, sel_nodes, labels):
+    node_stat = {}
+    for node in sel_nodes:
+        neighbors = graph.neighbors(node)
+        nb_label = [nodes[n] for n in neighbors]
+        ctr = Counter(nb_label)
+        stat = [ctr[l] for l in labels]
+        node_stat[node] = stat
+    return labels, node_stat
+
+
+def triple_distribution(graph, nodes, tridict, sel_nodes, labels):
+    node_tri_stat = {}
+    label_pattern = []
+    for i, l1 in enumerate(labels):
+        for j, l2 in enumerate(labels[i:]):
+            label_pattern.append(__label_pair(l1, l2, '-'))
+    for node in sel_nodes:
+        triples = tridict[node]
+        tri_label = [__label_pair(nodes[tri[0]], nodes[tri[1]], '-') for tri in triples if [''] not in triples]
+        ctr = Counter(tri_label)
+        stat = [ctr[l] for l in label_pattern]
+        node_tri_stat[node] = stat
+    return label_pattern, node_tri_stat
+
+
 def __pair_prob(graph, nodes, not_sel_nodes, labels):
     crt_class_label = {}
     for i, l1 in enumerate(labels):
@@ -231,6 +257,37 @@ def ran_mixture_model(graph, nodes, tridict, sel_nodes, not_sel_nodes, labels):
         # print max_index
         pred_labs.append(label_dict[max_index])
     return pred_labs
+
+
+def ran_node_model(graph, nodes, sel_nodes, not_sel_nodes, labels):
+    label_dict = {'rnd': 0, 'mns': 1, 'exe': 2}
+    node_prob = {}
+    tags = [nodes[n] for n in not_sel_nodes]
+    tag_ctr = Counter(tags)
+    for node in not_sel_nodes:
+        neighbors = graph.neighbors(node)
+        label_set = [nodes[n] for n in neighbors if n not in sel_nodes]
+        lab_ctr = Counter(label_set)
+        node_prob[node]  = {l:(lab_ctr[l])/float(len(neighbors))*tag_ctr[l]/float(len(not_sel_nodes)) \
+                            for l in labels}
+    pred_labs = []
+    for node in sel_nodes:
+        neighbors = graph.neighbors(node)
+        class_prob = {l: tag_ctr[l]/float(len(not_sel_nodes)) for l in labels}
+        for n in neighbors:
+            if n not in not_sel_nodes:
+                continue
+            for c in labels:
+                class_prob[c] *= node_prob[n][c]
+        max_index = max(class_prob, key=class_prob.get)
+        pred_labs.append(label_dict[max_index])
+    return pred_labs
+
+
+
+
+
+
 
 
 

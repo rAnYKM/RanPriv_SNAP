@@ -268,7 +268,7 @@ def ran_node_model(graph, nodes, sel_nodes, not_sel_nodes, labels):
         neighbors = graph.neighbors(node)
         label_set = [nodes[n] for n in neighbors if n not in sel_nodes]
         lab_ctr = Counter(label_set)
-        node_prob[node]  = {l:(lab_ctr[l])/float(len(neighbors))*tag_ctr[l]/float(len(not_sel_nodes)) \
+        node_prob[node]  = {l:(lab_ctr[l])/float(len(neighbors))*tag_ctr[l]/float(len(neighbors))*(len(not_sel_nodes)) \
                             for l in labels}
     pred_labs = []
     for node in sel_nodes:

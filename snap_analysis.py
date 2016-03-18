@@ -12,16 +12,12 @@
 # Version       :   1.0.0
 # Description   :   Obtain various analysis methods for SNAP data set (Google+)
 
-import numpy as np
-from collections import Counter
+
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.multiclass import OneVsOneClassifier
-from sklearn.multiclass import OutputCodeClassifier
 from snap_core import *
 from ran_priv_core import *
 import csv
@@ -70,7 +66,7 @@ def analyze_nodes(graph, nodes, triples, sel_nodes):
     with open(os.path.join(OUT_DATA_DIR, 'stat.csv'), 'w') as fp:
         fp.write('id,label,' + ','.join(labels) + ',' + ','.join(label_pattern) + '\n')
         for node in sel_nodes:
-            fp.write(node + ',' + nodes[node] + ',' + \
+            fp.write(node + ',' + nodes[node] + ',' +\
                      ','.join([str(n) for n in node_pair[node] + node_tri[node]]) + '\n')
 
 
@@ -138,7 +134,7 @@ def fetch_AND(graph, nodes, sel_nodes, not_included):
     show_distribution(labels, 0, 300, 10)
 
 
-def fetch_triangles(graph, labeled_nodes, sel_nodes):
+def fetch_triangles(graph, sel_nodes):
     nodes_tri = {}
     crt = 0
     for node in sel_nodes:
@@ -187,7 +183,7 @@ def show_distribution(distribution, start, end, step):
                 if j >= end - step - 0.000001:
                     true_li.append(j)
                     break
-                if i >= j - 0.000001 and i < j + step:
+                if j - 0.000001 <= i < j + step:
                     true_li.append(j)
                     break
         ctr = Counter(true_li)
@@ -222,11 +218,12 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
         nei_feature = [nodes[nd] for nd in neighbors]
         ctr = Counter(nei_feature)
         tot = float(len(neighbors))
-        feature = [ctr['rnd'], ctr['mns'], ctr['exe']]
+        feature = [ctr['rnd']/tot, ctr['mns']/tot, ctr['exe']/tot]
 
         tri = tri_nodes[node]
         num_tri = len(tri)
         # feature = []
+
         if num_tri == 0:
             feature += [0, 0, 0, 0, 0, 0]
         else:
@@ -244,24 +241,22 @@ def machine_learning(graph, nodes, sel_nodes, tri_nodes):
                         pattern = lab1 + ',' + lab2
                     pat.append(pattern)
                 p_ctr = Counter(pat)
-                feature += [p_ctr['rnd,rnd'], p_ctr['exe,rnd'], p_ctr['mns,rnd'],
-                            p_ctr['exe,exe'], p_ctr['exe,mns'], p_ctr['mns,mns']]
-        feature += [node_dc[node], node_and[node]]
-
+                feature += [p_ctr['rnd,rnd']/f_num, p_ctr['exe,rnd']/f_num, p_ctr['mns,rnd']/f_num,
+                            p_ctr['exe,exe']/f_num, p_ctr['exe,mns']/f_num, p_ctr['mns,mns']/f_num]
+        # feature += [node_dc[node], node_and[node]]
         features.append(feature)
     feature_x = np.array(features)
-
     print ('start to learn features')
     for train_index, test_index in sss:
         X_train = feature_x[train_index]
         Y_train = label_y[train_index]
         X_test = feature_x[test_index]
         Y_test = label_y[test_index]
-        # y_pred = mnb.fit(X_train, Y_train).predict(X_test)
+        y_pred = gnb.fit(X_train, Y_train).predict(X_test)
         # y_pred = ran_log_model(\
         #    graph, nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
-        y_pred = ran_tri_prob_model(\
-            graph, nodes, tri_nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
+        # y_pred = ran_tri_prob_model(\
+        #    graph, nodes, tri_nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
         # y_pred = ran_mixture_model(\
         #    graph, nodes, tri_nodes, np.array(sel_nodes)[test_index], np.array(sel_nodes)[train_index], ['rnd', 'mns', 'exe'])
         #y_pred = ran_node_model(\
@@ -361,7 +356,7 @@ def analysis_learning(graph, nodes, node_analysis, node_label):
     x = []
     node_dc = nx.degree_centrality(graph)
     node_and = nx.average_neighbor_degree(graph)
-    # node_cliques = clique_analysis(graph, nodes, uid)
+    node_cliques = clique_analysis(graph, nodes, uid)
     for index, item in enumerate(raw_x):
         feature = []
         s = item['rnd'] + item['mns'] + item['exe']
@@ -398,10 +393,10 @@ def analysis_learning(graph, nodes, node_analysis, node_label):
     npy = np.array(y)
     gnb = GaussianNB()
     tre = DecisionTreeClassifier(random_state=0)
-    clf = SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,\
-    decision_function_shape='ovo', degree=3, gamma='auto', kernel='rbf',\
-    max_iter=-1, probability=False, random_state=None, shrinking=True,\
-    tol=0.001, verbose=False)
+    clf = SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+              decision_function_shape='ovo', degree=3, gamma='auto', kernel='rbf',
+              max_iter=-1, probability=False, random_state=None, shrinking=True,
+              tol=0.001, verbose=False)
     print ('start to learn features')
     for train_index, test_index in sss:
         x_train = npx[train_index]
@@ -409,7 +404,7 @@ def analysis_learning(graph, nodes, node_analysis, node_label):
         x_test = npx[test_index]
         y_test = npy[test_index]
         y_pred = tre.fit(x_train, y_train).predict(x_test)
-        #y_pred = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0).fit(x_train, y_train).predict(x_test)
+        # y_pred = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0).fit(x_train, y_train).predict(x_test)
         ta = 0.0  # true
         ga = 0.0  # guess true but wrong
         za = 0.0  # how many a ta/za = recall ta/(ta+ga) = precision
@@ -465,7 +460,7 @@ def load_analysis(filename):
     node_analysis = {}
     node_label = {}
     with open(os.path.join(OUT_DATA_DIR, filename), 'rb') as fp:
-        reader= csv.DictReader(fp)
+        reader = csv.DictReader(fp)
         for row in reader:
             node_analysis[row['id']] = {name: eval(val) for name, val in row.iteritems() if name not in ['id', 'label']}
             node_label[row['id']] = row['label']

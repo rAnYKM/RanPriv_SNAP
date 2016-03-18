@@ -51,9 +51,9 @@ def big_data_set(threshold=5):
     ctr = Counter(tag)
     print ctr['rnd'], ctr['mns'], ctr['exe']
     print ("Important nodes number: %d" % len(sel_nodes))
-    # node_tri = sa.fetch_triangles(graph, nodes, sel_nodes)
+    node_tri = sa.fetch_triangles(graph, nodes, sel_nodes)
     # sa.save_triangles('ranykm_big_data.tri', node_tri)
-    node_tri = sa.load_triangles('ranykm_big_data.tri')
+    # node_tri = sa.load_triangles('ranykm_big_data.tri')
     # sc.capture_ego(graph, nodes, '113006028898915385825', node_tri, 'sample.ego')
 
     # sa.fetch_homophily(graph, nodes, sel_nodes, ['unl'])

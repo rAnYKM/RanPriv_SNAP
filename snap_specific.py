@@ -29,6 +29,7 @@ def __conditions_transform(conditions, feats):
         for n in names:
             tmp_index = [no - 1 for name, cat, no in feats if n in name and cat == cate]
             index += tmp_index
+    print index
     return index
 
 
@@ -53,6 +54,15 @@ def __fetch_new_features(sel_nodes, feats, new_feats, categories):
     return new_nodes, new_feats
 
 
+def __process_nodes(line):
+    l = line.strip('\n').split(':')
+    if l[1] != '':
+        indices = [eval(item) for item in l[1].split(' ')]
+    else:
+        indices = [-1]
+    return l[0], indices
+
+
 def ego_loader(ego):
     """
     Fetch selected ego's feature pattern
@@ -66,7 +76,20 @@ def ego_loader(ego):
     return index
 
 
-def net_extractor(ego, conditions, categories, new_feats):
+def load_sp_node_feat(filename):
+    nodes = {}
+    with open(os.path.join(OUT_DATA_DIR, filename + '[sp].nodes')) as fpa:
+        lines = fpa.readlines()
+        for l in lines:
+            uid, indices = __process_nodes(l)
+            nodes[uid] = indices
+    with open(os.path.join(OUT_DATA_DIR, filename + '[sp].feats')) as fpb:
+        lines = fpb.readlines()
+        feats = [line.strip('\r\n').split(',') for line in lines]
+    return nodes, feats
+
+
+def net_extractor(ego, conditions, categories, new_nodes, new_feats):
     """
     Get a list of nodes with features in specific categories.
     Condition Format Example:
@@ -74,7 +97,9 @@ def net_extractor(ego, conditions, categories, new_feats):
     :param ego: String
     :param conditions: Dict
     :param categories: List
-    :return:
+    :param new_nodes: Dict
+    :param new_feats: List
+    :return: Dict, List
     """
     feats = load_feat_name(ego)
     nodes = load_node_feat(ego)
@@ -82,31 +107,67 @@ def net_extractor(ego, conditions, categories, new_feats):
     nodes.append((ego, ego_loader(ego)))
     sel_nodes = dict()
     for uid, indices in nodes:
+        if uid in new_nodes:
+            continue
         flag = False
         for index in indices:
             if index in cons:
-                flag =True
+                flag = True
                 break
         if flag:
             sel_nodes[uid] = indices
-    new_nodes, new_feats = __fetch_new_features(sel_nodes, feats, new_feats, categories)
+    tmp_nodes, new_feats = __fetch_new_features(sel_nodes, feats, new_feats, categories)
+    new_nodes.update(tmp_nodes)
     return new_nodes, new_feats
+
+
+def write_sp_node_files(filename, nodes, feats):
+    """
+    write nodes and feats into files, and generate a preview file for classification
+    :param filename: String
+    :param nodes: Dict
+    :param feats: List
+    :return: None
+    """
+    with open(os.path.join(OUT_DATA_DIR, filename + '[sp].nodes'), 'wb') as fpa,\
+            open(os.path.join(OUT_DATA_DIR, filename + '[sp].labels'), 'wb') as fpb:
+        for uid, indices in nodes.iteritems():
+            str_indices = [str(i) for i in indices]
+            name_indices = [feats[i][0] for i in indices]
+            fpa.write(uid + ':' + ' '.join(str_indices) + '\n')
+            fpb.write(uid + ':' + ' '.join(name_indices) + ':\n')
+    with open(os.path.join(OUT_DATA_DIR, filename + '[sp].feats'), 'wb') as fp:
+        for name, cate in feats:
+            fp.write(name + ',' + cate + '\n')
 
 
 def main():
     egos = load_egos()
+    nodes = {}
+    feats = []
     print 'Start!'
-    nodes, feats = net_extractor(egos[0], {'institution': 'Google'}, ['job_title'], [])
+    for ego in egos:
+        print ego + ' -> extracting start!'
+        nodes, feats = net_extractor(ego, {'institution': ['Google']}, ['job_title'], nodes, feats)
+        print 'Current Node Number: %d, Feat Number: %d' % (len(nodes), len(feats))
     # print feats
+    '''
     for n, indices in nodes.iteritems():
         print n,
         for index in indices:
             print feats[index][0],
         print '\n'
+    '''
+    write_sp_node_files('RanGoogle', nodes, feats)
+    print ('Fin. by rAnYKM')
+
+
+def __ran_test():
+    nodes, feats = load_sp_node_feat('RanGoogle')
+    print 'Start Edge Generator'
+    edge_generator(nodes.keys(), EGO_EDGE, 'RanGoogle[sp]')
+    print 'Fin. by rAnYKM'
+
 
 if __name__ == '__main__':
-    main()
-
-
-
-
+    __ran_test()
